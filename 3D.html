@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>莫比烏斯環</title>
+<style>
+  svg {
+    border: 1px solid black;
+  }
+</style>
+</head>
+<body>
+<h2>莫比烏斯環</h2>
+<form id="mobiusForm">
+  <label for="width">寬：</label>
+  <input type="number" id="width" name="width"><br><br>
+  <button type="button" onclick="calculateStrip()">計算</button><br><br>
+  <p id="result"></p>
+</form>
+<svg id="mobiusStrip" width="400" height="200"></svg>
+<img src="file:///C:/Users/AD/Desktop/v2-b2b3493b72fba060055333091ac9e659_b.jpg" alt="莫比烏斯環圖案" width="400">
+<script>
+  function calculateStrip() {
+    var width = document.getElementById('width').value;
+    var length = Math.PI * width;
+    var area = 2 * width * Math.PI;
+    document.getElementById('result').innerHTML = "莫比烏斯環的周長：" + length + "<br>莫比烏斯環的表面積：" + area;
+  }
+</script>
+</body>
+</html>

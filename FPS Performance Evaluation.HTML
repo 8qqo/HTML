@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>FPS Performance Evaluation</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+        #fps-counter {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: black;
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 10px;
+            z-index: 1;
+        }
+        #controls-left {
+            position: absolute;
+            top: 70px;
+            left: 10px;
+            z-index: 1;
+        }
+        .slider {
+            display: block;
+            margin-bottom: 10px;
+        }
+        .control-label {
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            color: white;
+            margin-bottom: 5px;
+        }
+        #cube-count-slider,
+        #rotation-speed-slider,
+        #resolution-slider,
+        #fov-slider {
+            width: 200px;
+        }
+        #cube-count-display,
+        #rotation-speed-display,
+        #resolution-display,
+        #fov-display {
+            font-family: Arial, sans-serif;
+            font-size: 18px;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div id="fps-counter"></div>
+    <div id="controls-left">
+        <div class="control-label">Cube Count</div>
+        <input type="range" id="cube-count-slider" class="slider" min="1" max="1000" value="50">
+        <div class="control-label">Rotation Speed</div>
+        <input type="range" id="rotation-speed-slider" class="slider" min="0.01" max="0.1" step="0.01" value="0.01">
+        <div class="control-label">Resolution</div>
+        <input type="range" id="resolution-slider" class="slider" min="100" max="16000" step="100" value="1080">
+        <div class="control-label">Field of View</div>
+        <input type="range" id="fov-slider" class="slider" min="30" max="179" value="75">
+        <div id="cube-count-display">Current Cube Count: 50</div>
+        <div id="rotation-speed-display">Rotation Speed: 0.01</div>
+        <div id="resolution-display">Resolution: 1080P</div>
+        <div id="fov-display">Field of View: 75</div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        let scene, camera, renderer, cubes = [];
+        let frameCount = 0;
+        let lastTime = performance.now();
+        let fpsContainer = document.getElementById('fps-counter');
+        let cubeCountSlider = document.getElementById('cube-count-slider');
+        let rotationSpeedSlider = document.getElementById('rotation-speed-slider');
+        let resolutionSlider = document.getElementById('resolution-slider');
+        let fovSlider = document.getElementById('fov-slider');
+        let cubeCountDisplay = document.getElementById('cube-count-display');
+        let rotationSpeedDisplay = document.getElementById('rotation-speed-display');
+        let resolutionDisplay = document.getElementById('resolution-display');
+        let fovDisplay = document.getElementById('fov-display');
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 50000);
+            renderer = new THREE.WebGLRenderer({antialias: true});
+            renderer.setClearColor(0x000000); // Set background to black
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // Create cubes based on initial cube count
+            createCubes(cubeCountSlider.value);
+
+            camera.position.z = 5;
+
+            // Listen for double-click event to enter fullscreen mode
+            document.addEventListener('dblclick', function() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen();
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    }
+                }
+            });
+
+            animate();
+        }
+
+        function createCubes(count) {
+            // Remove existing cubes
+            cubes.forEach(cube => {
+                scene.remove(cube);
+            });
+            cubes = [];
+
+            // Create new cubes
+            for (let i = 0; i < count; i++) {
+                const size = (i / 10) + 0.5; // Different sizes for each layer
+                const cubeGeometry = new THREE.BoxGeometry(size, size, size);
+                const cubeMaterial = new THREE.MeshBasicMaterial({ 
+                    color: new THREE.Color(`hsl(${(i * 360) / count}, 100%, 50%)`), 
+                    wireframe: true 
+                });
+                const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+
+                // Place cubes at the same position
+                cube.position.set(0, 0, 0);
+
+                // Determine rotation direction based on index parity
+                cube.rotationDirection = i % 2 === 0 ? 1 : -1;
+
+                // Add cube to scene and cube array
+                scene.add(cube);
+                cubes.push(cube);
+            }
+
+            // Update cube count display
+            cubeCountDisplay.textContent = `Current Cube Count: ${count}`;
+            // Render the scene
+            renderer.render(scene, camera);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Update rotation for each cube
+            cubes.forEach((cube, index) => {
+                let rotationSpeed = parseFloat(rotationSpeedSlider.value);
+                cube.rotation.x += rotationSpeed;
+                cube.rotation.y += rotationSpeed;
+                cube.rotation.z += rotationSpeed * cube.rotationDirection; // Use rotation direction
+
+                // Update cube color to create a color cycling effect
+                let colorShift = (performance.now() / 10 + index * 10) % 360;
+                cube.material.color.setHSL(colorShift / 360, 1, 0.5);
+            });
+
+            // Calculate FPS
+            frameCount++;
+            let currentTime = performance.now();
+            let delta = (currentTime - lastTime) / 1000;
+            if (delta >= 1) {
+                let fps = Math.round(frameCount / delta);
+                fpsContainer.textContent = 'FPS: ' + fps;
+                frameCount = 0;
+                lastTime = currentTime;
+            }
+
+            // Render the scene
+            renderer.render(scene, camera);
+
+            // Update rotation speed, resolution, and FOV display
+            rotationSpeedDisplay.textContent = `Rotation Speed: ${parseFloat(rotationSpeedSlider.value).toFixed(2)}`;
+            resolutionDisplay.textContent = `Resolution: ${resolutionSlider.value}P`;
+            fovDisplay.textContent = `Field of View: ${fovSlider.value}`;
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        cubeCountSlider.addEventListener('input', function() {
+            createCubes(this.value);
+        });
+
+        rotationSpeedSlider.addEventListener('input', function() {
+            rotationSpeedDisplay.textContent = `Rotation Speed: ${parseFloat(this.value).toFixed(2)}`;
+        });
+
+        resolutionSlider.addEventListener('input', function() {
+            resolutionDisplay.textContent = `Resolution: ${this.value}P`;
+            updateResolution(this.value);
+        });
+
+        fovSlider.addEventListener('input', function() {
+            updateFOV(this.value);
+        });
+
+        function updateResolution(resolution) {
+            let aspectRatio = window.innerWidth / window.innerHeight;
+            let width = resolution;
+            let height = resolution / aspectRatio;
+            let pixelRatio = window.devicePixelRatio;
+            camera.aspect = aspectRatio;
+            camera.updateProjectionMatrix();
+            renderer.setPixelRatio(pixelRatio);
+            renderer.setSize(width, height);
+        }
+
+        function updateFOV(fov) {
+            camera.fov = fov;
+            camera.updateProjectionMatrix();
+            fovDisplay.textContent = `Field of View: ${fov}`;
+        }
+
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>IP地址轉換為經緯度</title>
+<script>
+function getCoordinates() {
+    var ip = document.getElementById('ip').value; // 從輸入框獲取IP地址
+    var apiUrl = 'https://ipapi.co/' + ip + '/json/'; // 使用ipapi的API
+
+    fetch(apiUrl)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('latitude').textContent = '緯度: ' + data.latitude;
+            document.getElementById('longitude').textContent = '經度: ' + data.longitude;
+        })
+        .catch(() => {
+            document.getElementById('latitude').textContent = '緯度: 無法獲取';
+            document.getElementById('longitude').textContent = '經度: 無法獲取';
+        });
+}
+</script>
+</head>
+<body>
+<h1>IP地址轉換為經緯度</h1>
+<input type="text" id="ip" placeholder="輸入IP地址">
+<button onclick="getCoordinates()">轉換</button>
+<p id="latitude"></p>
+<p id="longitude"></p>
+</body>
+</html>

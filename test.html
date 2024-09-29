@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Coordinate System</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+        }
+        .info-container, .input-container, #coordinateList, #result {
+            position: absolute;
+            z-index: 100;
+            font-size: 18px;
+        }
+        .info-container {
+            top: 10px;
+            left: 10px;
+        }
+        #mousePosition {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        #helpButton {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border: none;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: #000;
+            z-index: 200; /* Ensure the help button is always on top */
+        }
+        #helpButton:hover {
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+        #helpText {
+            display: none;
+            position: absolute;
+            bottom: 60px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 10px;
+            z-index: 200; /* Ensure the help text is on top */
+        }
+        .input-container {
+            bottom: 10px;
+            left: 10px;
+        }
+        .input-container input, #addButton {
+            width: 120px;
+            margin-bottom: 5px;
+            padding: 5px;
+            font-size: 16px;
+        }
+        #addButton {
+            width: auto;
+            cursor: pointer;
+        }
+        #coordinateList {
+            top: 100px;
+            left: 10px;
+        }
+        #result {
+            top: 10px;
+            right: 10px;
+            text-align: right;
+        }
+        #result h3, #perimeter, #volume, #centroid {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="info-container">
+        <div id="info">3D Coordinate System</div>
+        <div id="mousePosition">Mouse Position: (0, 0, 0)</div>
+    </div>
+    <div id="helpText">
+        <h2>Usage Instructions</h2>
+        <p>This is a simple example of a 3D coordinate system.</p>
+        <p>Use the left mouse button to rotate the scene, right mouse button to pan, and mouse wheel to zoom.</p>
+        <p>Click on coordinate axes to view corresponding coordinate values.</p>
+    </div>
+    <div class="input-container">
+        <input type="number" id="xInput" placeholder="X coordinate">
+        <input type="number" id="yInput" placeholder="Y coordinate">
+        <input type="number" id="zInput" placeholder="Z coordinate">
+        <button id="addButton">Add</button>
+    </div>
+    <div id="coordinateList">
+        <h3>Marked Coordinates</h3>
+    </div>
+    <div id="result">
+        <h3>Calculation Result</h3>
+        <p id="perimeter">Perimeter: </p>
+        <p id="volume">Volume: </p>
+        <p id="centroid">Centroid: </p>
+    </div>
+    <button id="helpButton">?</button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script>
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+        camera.position.set(15, 15, 15);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.25;
+        controls.enableZoom = true;
+
+        const createAxis = (color, from, to, arrowLength, arrowRadius) => {
+            const material = new THREE.MeshBasicMaterial({ color });
+            const direction = new THREE.Vector3().subVectors(to, from);
+            const cylinderGeometry = new THREE.CylinderGeometry(arrowRadius, arrowRadius, direction.length(), 32);
+            const cylinder = new THREE.Mesh(cylinderGeometry, material);
+            cylinder.position.copy(from).add(direction.multiplyScalar(0.5));
+            cylinder.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.clone().normalize());
+            const arrowHeadGeometry = new THREE.ConeGeometry(arrowRadius * 2, arrowLength, 32);
+            const arrowHead = new THREE.Mesh(arrowHeadGeometry, material);
+            arrowHead.position.copy(to);
+            arrowHead.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.clone().normalize());
+            scene.add(cylinder);
+            scene.add(arrowHead);
+        };
+
+        const gridSize = 100;
+        const arrowLength = 2;
+        const arrowRadius = 0.25;
+        createAxis(0xff0000, new THREE.Vector3(-gridSize, 0, 0), new THREE.Vector3(gridSize, 0, 0), arrowLength, arrowRadius);
+        createAxis(0x00ff00, new THREE.Vector3(0, -gridSize, 0), new THREE.Vector3(0, gridSize, 0), arrowLength, arrowRadius);
+        createAxis(0x0000ff, new THREE.Vector3(0, 0, -gridSize), new THREE.Vector3(0, 0, gridSize), arrowLength, arrowRadius);
+        const gridHelper = new THREE.GridHelper(gridSize * 2, gridSize);
+        scene.add(gridHelper);
+
+        const createLabel = (text, position) => {
+            const loader = new THREE.FontLoader();
+            loader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', (font) => {
+                const geometry = new THREE.TextGeometry(text, { font, size: 0.5, height: 0.1 });
+                const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.copy(position);
+                scene.add(mesh);
+            });
+        };
+
+        for (let i = -gridSize; i <= gridSize; i += 10) {
+            if (i !== 0) {
+                createLabel(i.toString(), new THREE.Vector3(i, 0, 0));
+                createLabel(i.toString(), new THREE.Vector3(0, i, 0));
+                createLabel(i.toString(), new THREE.Vector3(0, 0, i));
+            }
+        }
+        createLabel('X', new THREE.Vector3(gridSize + 2, 0, 0));
+        createLabel('Y', new THREE.Vector3(0, gridSize + 2, 0));
+        createLabel('Z', new THREE.Vector3(0, 0, gridSize + 2));
+
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        const mousePositionDiv = document.getElementById('mousePosition');
+        window.addEventListener('mousemove', (event) => {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(scene.children, true);
+            if (intersects.length > 0) {
+                const point = intersects[0].point;
+                mousePositionDiv.textContent = `Mouse Position: (${point.x.toFixed(2)}, ${point.y.toFixed(2)}, ${point.z.toFixed(2)})`;
+            }
+        });
+
+        let isFullScreen = false;
+        window.addEventListener('dblclick', () => {
+            const elem = document.body;
+            if (!isFullScreen) {
+                if (elem.requestFullscreen) elem.requestFullscreen();
+                else if (elem.mozRequestFullScreen) elem.mozRequestFullScreen();
+                else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+                else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+                else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                else if (document.msExitFullscreen) document.msExitFullscreen();
+            }
+            isFullScreen = !isFullScreen;
+        });
+
+        const coordinates = [];
+        const coordinateListDiv = document.getElementById('coordinateList');
+        const addButton = document.getElementById('addButton');
+        const xInput = document.getElementById('xInput');
+        const yInput = document.getElementById('yInput');
+        const zInput = document.getElementById('zInput');
+        const perimeterDiv = document.getElementById('perimeter');
+        const volumeDiv = document.getElementById('volume');
+        const centroidDiv = document.getElementById('centroid');
+
+        const addCoordinate = (x, y, z) => {
+            coordinates.push(new THREE.Vector3(x, y, z));
+            const sphereGeometry = new THREE.SphereGeometry(0.2, 32, 32);
+            const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+            const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+            sphere.position.set(x, y, z);
+            scene.add(sphere);
+            const coordDiv = document.createElement('div');
+            coordDiv.textContent = `(${x}, ${y}, ${z})`;
+            coordinateListDiv.appendChild(coordDiv);
+            calculateResults();
+        };
+
+        addButton.addEventListener('click', () => {
+            const x = parseFloat(xInput.value);
+            const y = parseFloat(yInput.value);
+            const z = parseFloat(zInput.value);
+            if (!isNaN(x) && !isNaN(y) && !isNaN(z)) {
+                addCoordinate(x, y, z);
+                xInput.value = '';
+                yInput.value = '';
+                zInput.value = '';
+            }
+        });
+
+        const calculateResults = () => {
+            if (coordinates.length >= 2) {
+                let perimeter = 0;
+                for (let i = 0; i < coordinates.length; i++) {
+                    perimeter += coordinates[i].distanceTo(coordinates[(i + 1) % coordinates.length]);
+                }
+                perimeterDiv.textContent = `Perimeter: ${perimeter.toFixed(2)}`;
+            }
+            if (coordinates.length >= 4) {
+                const volume = calculateTetrahedronVolume(coordinates[0], coordinates[1], coordinates[2], coordinates[3]);
+                volumeDiv.textContent = `Volume: ${volume.toFixed(2)}`;
+                const centroid = calculateCentroid(coordinates);
+                centroidDiv.textContent = `Centroid: (${centroid.x.toFixed(2)}, ${centroid.y.toFixed(2)}, ${centroid.z.toFixed(2)})`;
+            }
+        };
+
+        const calculateTetrahedronVolume = (a, b, c, d) => {
+            const ab = b.clone().sub(a);
+            const ac = c.clone().sub(a);
+            const ad = d.clone().sub(a);
+            return Math.abs(ab.dot(ac.cross(ad))) / 6;
+        };
+
+        const calculateCentroid = (points) => {
+            const centroid = new THREE.Vector3(0, 0, 0);
+            points.forEach(point => centroid.add(point));
+            return centroid.divideScalar(points.length);
+        };
+
+        const helpButton = document.getElementById('helpButton');
+        const helpText = document.getElementById('helpText');
+        helpButton.addEventListener('click', () => {
+            helpText.style.display = helpText.style.display === 'none' ? 'block' : 'none';
+        });
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        const animate = () => {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        };
+
+        animate();
+    </script>
+</body>
+</html>

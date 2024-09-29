@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微积分计算器</title>
+    <style>
+        input[type="text"] {
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <h1>微积分计算器</h1>
+    <p>输入一个函数，然后点击计算。</p>
+    <input type="text" id="inputFunction" placeholder="输入函数">
+    <button onclick="calculateIntegral()">计算</button>
+    <p id="result"></p>
+
+    <script>
+        function calculateIntegral() {
+            var inputFunction = document.getElementById("inputFunction").value;
+            try {
+                var result = integrate(inputFunction);
+                document.getElementById("result").innerText = "积分结果：" + result;
+            } catch (error) {
+                document.getElementById("result").innerText = "错误：" + error.message;
+            }
+        }
+
+        function integrate(func) {
+            // 这里可以使用你选择的积分方法来实现微积分计算
+            // 这是一个示例，具体的积分方法需要根据你的需求来实现
+            // 这里只是简单地返回一个示例值
+            return "∫(" + func + ") dx";
+        }
+    </script>
+</body>
+</html>

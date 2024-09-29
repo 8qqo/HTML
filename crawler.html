@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nvidia Stock Trend</title>
+</head>
+<body>
+    <h1>Nvidia Stock Trend</h1>
+    <div id="stock-trend"></div>
+
+    <script>
+        function fetchStockData() {
+            fetch('https://tw.stock.yahoo.com/quote/NVDA')
+                .then(response => response.text())
+                .then(html => {
+                    // 將 HTML 轉換為 DOM 元素
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+
+                    // 從 DOM 中提取股票資料
+                    const latestPrice = doc.querySelector('.D(ib) > span').textContent;
+                    const changePercent = doc.querySelector('.C($primaryColor) > span').textContent;
+                    const volume = doc.querySelector('.Trsdu(0.3s) > span').textContent;
+
+                    // 更新網頁上的股票資料
+                    const stockTrendElement = document.getElementById('stock-trend');
+                    stockTrendElement.innerHTML = `
+                        <p>最新價格: ${latestPrice}</p>
+                        <p>漲跌幅: ${changePercent}</p>
+                        <p>交易量: ${volume}</p>
+                    `;
+                })
+                .catch(error => {
+                    console.error('發生錯誤:', error);
+                });
+        }
+
+        // 每5秒更新一次股票資料
+        setInterval(fetchStockData, 5000);
+
+        // 初始執行一次
+        fetchStockData();
+    </script>
+</body>
+</html>

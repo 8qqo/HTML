@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>反應測試</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        #container {
+            text-align: center;
+        }
+        #startButton, #colorBox {
+            padding: 20px;
+            margin-top: 20px;
+            font-size: 20px;
+            cursor: pointer;
+            border: none;
+        }
+        #colorBox {
+            display: none;
+            width: 800px;
+            height: 800px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>反應測試</h1>
+        <button id="startButton">開始</button>
+        <div id="colorBox"></div>
+        <p id="result"></p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const startButton = document.getElementById('startButton');
+            const colorBox = document.getElementById('colorBox');
+            const result = document.getElementById('result');
+            let startTime, endTime, timeout;
+
+            startButton.addEventListener('click', () => {
+                startButton.style.display = 'none';
+                result.textContent = '';
+                
+                const randomTime = Math.floor(Math.random() * 5000) + 1000; // 1到6秒之間的隨機時間
+                timeout = setTimeout(() => {
+                    colorBox.style.backgroundColor = 'green';
+                    colorBox.style.display = 'block';
+                    startTime = new Date().getTime();
+                }, randomTime);
+            });
+
+            colorBox.addEventListener('click', () => {
+                if (startTime) {
+                    endTime = new Date().getTime();
+                    const reactionTime = endTime - startTime;
+                    result.textContent = `你的反應時間是 ${reactionTime} 毫秒`;
+                    resetTest();
+                }
+            });
+
+            function resetTest() {
+                startButton.style.display = 'block';
+                colorBox.style.display = 'none';
+                colorBox.style.backgroundColor = 'transparent';
+                startTime = null;
+                endTime = null;
+                clearTimeout(timeout);
+            }
+        });
+    </script>
+</body>
+</html>
