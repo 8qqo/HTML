@@ -196,32 +196,33 @@
             }
         });
 
-        // Function to add coordinates and connect all points
-        const addCoordinate = (x, y, z) => {
-            // Display marked coordinates in the list
-            const coordinateDiv = document.createElement('div');
-            coordinateDiv.textContent = `(${x}, ${y}, ${z})`;
-            document.getElementById('coordinateList').appendChild(coordinateDiv);
+        // Function to add a coordinate to the scene and calculate properties
+	const addCoordinate = (x, y, z) => {
+    	const point = new THREE.Vector3(x, y, z);
+    	markedPoints.push(point);
 
-            // Create a sphere to mark the coordinate point
-            const sphereGeometry = new THREE.SphereGeometry(0.1, 16, 16);
-            const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
-            const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-            sphere.position.set(x, y, z);
-            scene.add(sphere);
+    	const sphereGeometry = new THREE.SphereGeometry(0.1, 32, 32);
+    	const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    	const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+    	sphere.position.copy(point);
+    	scene.add(sphere);
 
-            // Add new marked point to the array
-            const newPoint = new THREE.Vector3(x, y, z);
-            markedPoints.push(newPoint);
+    	// Update the coordinate list
+    	const coordinateList = document.getElementById('coordinateList');
+    	const coordinateItem = document.createElement('div');
+    	coordinateItem.textContent = `(${x}, ${y}, ${z})`;
+    	coordinateList.appendChild(coordinateItem);
 
-            // Create lines to connect all points
-            for (let i = 0; i < markedPoints.length - 1; i++) {
-                createLine(markedPoints[i], newPoint);
-            }
+    	// Calculate perimeter, volume, and centroid
+    	calculatePerimeter();
+    	calculateCentroid();
+    	calculateVolume();
 
-            // Check for right angles and mark them
-            checkForRightAngles();
-        };
+    	// Draw lines between the new point and all previously marked points
+    	for (let i = 0; i < markedPoints.length - 1; i++) {
+        	createLine(markedPoints[i], point);  // Draw a line between existing points and the new point
+    	}
+	};
 
         // Function to check for right angles
         const checkForRightAngles = () => {
