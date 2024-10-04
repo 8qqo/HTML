@@ -177,92 +177,81 @@
         const zInput = document.getElementById('zInput');
         const addButton = document.getElementById('addButton');
 
-        // Add event listener to the "Add" button
+        // Function to calculate perimeter
+        const calculatePerimeter = () => {
+            if (markedPoints.length < 2) {
+                document.getElementById('perimeter').textContent = 'Perimeter: N/A';
+                return;
+            }
+            let perimeter = 0;
+            for (let i = 0; i < markedPoints.length - 1; i++) {
+                perimeter += markedPoints[i].distanceTo(markedPoints[i + 1]);
+            }
+            document.getElementById('perimeter').textContent = `Perimeter: ${perimeter.toFixed(2)}`;
+        };
+
+        // Function to calculate volume (for now, just a placeholder)
+        const calculateVolume = () => {
+            if (markedPoints.length < 3) {
+                document.getElementById('volume').textContent = 'Volume: N/A';
+                return;
+            }
+            // Placeholder for volume calculation logic
+            const volume = 0; // Replace with actual volume calculation
+            document.getElementById('volume').textContent = `Volume: ${volume}`;
+        };
+
+        // Function to calculate centroid
+        const calculateCentroid = () => {
+            if (markedPoints.length === 0) {
+                document.getElementById('centroid').textContent = 'Centroid: N/A';
+                return;
+            }
+            const centroid = new THREE.Vector3();
+            markedPoints.forEach(point => {
+                centroid.add(point);
+            });
+            centroid.divideScalar(markedPoints.length);
+            document.getElementById('centroid').textContent = `Centroid: (${centroid.x.toFixed(2)}, ${centroid.y.toFixed(2)}, ${centroid.z.toFixed(2)})`;
+        };
+
+        // Event listener for add button
         addButton.addEventListener('click', () => {
             const x = parseFloat(xInput.value);
             const y = parseFloat(yInput.value);
             const z = parseFloat(zInput.value);
-
-            // Check if inputs are valid numbers
-            if (!isNaN(x) && !isNaN(y) && !isNaN(z)) {
-                addCoordinate(x, y, z);
-
-                // Clear input fields
-                xInput.value = '';
-                yInput.value = '';
-                zInput.value = '';
-            } else {
-                alert('Please enter valid numbers for the coordinates.');
-            }
+            addCoordinate(x, y, z);
+            xInput.value = '';
+            yInput.value = '';
+            zInput.value = '';
         });
 
         // Function to add a coordinate to the scene and calculate properties
-	const addCoordinate = (x, y, z) => {
-    	const point = new THREE.Vector3(x, y, z);
-    	markedPoints.push(point);
+        const addCoordinate = (x, y, z) => {
+            const point = new THREE.Vector3(x, y, z);
+            markedPoints.push(point);
 
-    	const sphereGeometry = new THREE.SphereGeometry(0.1, 32, 32);
-    	const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-    	const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-    	sphere.position.copy(point);
-    	scene.add(sphere);
+            const sphereGeometry = new THREE.SphereGeometry(0.1, 32, 32);
+            const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+            const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+            sphere.position.copy(point);
+            scene.add(sphere);
 
-    	// Update the coordinate list
-    	const coordinateList = document.getElementById('coordinateList');
-    	const coordinateItem = document.createElement('div');
-    	coordinateItem.textContent = `(${x}, ${y}, ${z})`;
-    	coordinateList.appendChild(coordinateItem);
+            // Update the coordinate list
+            const coordinateList = document.getElementById('coordinateList');
+            const coordinateItem = document.createElement('div');
+            coordinateItem.textContent = `(${x}, ${y}, ${z})`;
+            coordinateList.appendChild(coordinateItem);
 
-    	// Calculate perimeter, volume, and centroid
-    	calculatePerimeter();
-    	calculateCentroid();
-    	calculateVolume();
+            // Calculate perimeter, volume, and centroid
+            calculatePerimeter();
+            calculateCentroid();
+            calculateVolume();
 
-    	// Draw lines between the new point and all previously marked points
-    	for (let i = 0; i < markedPoints.length - 1; i++) {
-        	createLine(markedPoints[i], point);  // Draw a line between existing points and the new point
-    	}
-	};
-
-        // Function to check for right angles
-        const checkForRightAngles = () => {
-            const anglesMarked = [];
-            const numPoints = markedPoints.length;
-
-            for (let i = 0; i < numPoints; i++) {
-                for (let j = i + 1; j < numPoints; j++) {
-                    for (let k = j + 1; k < numPoints; k++) {
-                        const v1 = new THREE.Vector3().subVectors(markedPoints[j], markedPoints[i]);
-                        const v2 = new THREE.Vector3().subVectors(markedPoints[k], markedPoints[j]);
-                        if (Math.abs(v1.dot(v2)) < 1e-10) { // Check for right angle
-                            anglesMarked.push({ point1: markedPoints[i], point2: markedPoints[j], point3: markedPoints[k] });
-                        }
-                    }
-                }
+            // Draw lines between the new point and all previously marked points
+            for (let i = 0; i < markedPoints.length - 1; i++) {
+                createLine(markedPoints[i], markedPoints[markedPoints.length - 1]);
             }
-
-            // Draw right angle markers
-            anglesMarked.forEach(({ point1, point2, point3 }) => {
-                const angleMarkerGeometry = new THREE.CylinderGeometry(0.05, 0.05, 1, 32);
-                const angleMarkerMaterial = new THREE.MeshBasicMaterial({ color: 0xff00ff });
-                const angleMarker1 = new THREE.Mesh(angleMarkerGeometry, angleMarkerMaterial);
-                const angleMarker2 = new THREE.Mesh(angleMarkerGeometry, angleMarkerMaterial);
-
-                // Calculate positions for the angle markers
-                const midPoint1 = new THREE.Vector3().addVectors(point1, point2).multiplyScalar(0.5);
-                const midPoint2 = new THREE.Vector3().addVectors(point2, point3).multiplyScalar(0.5);
-                const direction1 = new THREE.Vector3().subVectors(point1, point2).normalize();
-                const direction2 = new THREE.Vector3().subVectors(point2, point3).normalize();
-
-                angleMarker1.position.copy(midPoint1).add(direction1.clone().multiplyScalar(0.5));
-                angleMarker2.position.copy(midPoint2).add(direction2.clone().multiplyScalar(0.5));
-
-                angleMarker1.rotation.z = Math.atan2(direction1.y, direction1.x);
-                angleMarker2.rotation.z = Math.atan2(direction2.y, direction2.x);
-
-                scene.add(angleMarker1);
-                scene.add(angleMarker2);
-            });
         };
 
         // Animation loop
@@ -274,30 +263,27 @@
 
         animate();
 
-        // Adjust the viewport when the window is resized
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+        // Update mouse position
+        document.addEventListener('mousemove', (event) => {
+            const rect = renderer.domElement.getBoundingClientRect();
+            const mouseX = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            const mouseY = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+            const vector = new THREE.Vector3(mouseX, mouseY, 0.5);
+            vector.unproject(camera);
+            const dir = vector.sub(camera.position).normalize();
+            const distance = -camera.position.z / dir.z;
+            const pos = camera.position.clone().add(dir.multiplyScalar(distance));
+            document.getElementById('mousePosition').textContent = `Mouse Position: (${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)})`;
         });
 
-        // Mouse move event to show position in 3D space
-        window.addEventListener('mousemove', (event) => {
-            const mouse = new THREE.Vector2(
-                (event.clientX / window.innerWidth) * 2 - 1,
-                -(event.clientY / window.innerHeight) * 2 + 1
-            );
-
-            const raycaster = new THREE.Raycaster();
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObject(gridHelper);
-
-            if (intersects.length > 0) {
-                const intersect = intersects[0];
-                // Correctly display the Y-axis value
-                const mousePosition = `Mouse Position: (${intersect.point.x.toFixed(2)}, ${intersect.point.y.toFixed(2)}, ${intersect.point.z.toFixed(2)})`;
-                document.getElementById('mousePosition').textContent = mousePosition;
-            }
+        // Handle window resizing
+        window.addEventListener('resize', () => {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            renderer.setSize(width, height);
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
         });
     </script>
 </body>
