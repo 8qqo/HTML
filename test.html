@@ -18,7 +18,7 @@
         .input-container,
         #coordinateList,
         #result {
-            position: absolute;=
+            position: absolute;
             z-index: 100;
             font-size: 18px;
         }
@@ -94,80 +94,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script>
-    	// Function to calculate the perimeter (total line length)
-	const calculatePerimeter = () => {
-    	let perimeter = 0;
-    	for (let i = 0; i < markedPoints.length - 1; i++) {
-        perimeter += markedPoints[i].distanceTo(markedPoints[i + 1]);
-    	}
-    	document.getElementById('perimeter').textContent = `Perimeter: ${perimeter.toFixed(2)}`;
-	};
-
-	// Function to calculate the centroid
-	const calculateCentroid = () => {
-    	if (markedPoints.length === 0) return;
-    
-    	let centroid = new THREE.Vector3(0, 0, 0);
-    	markedPoints.forEach(point => {
-        centroid.add(point);
-    	});
-    	centroid.divideScalar(markedPoints.length);
-    	document.getElementById('centroid').textContent = `Centroid: (${centroid.x.toFixed(2)}, ${centroid.y.toFixed(2)}, ${centroid.z.toFixed(2)})`;
-	};
-
-	// Function to calculate the volume (using tetrahedron decomposition method)
-	const calculateVolume = () => {
-    	let volume = 0;
-
-    // Only calculate volume if we have at least four points (for a tetrahedron)
-    if (markedPoints.length < 4) {
-        document.getElementById('volume').textContent = 'Volume: Insufficient points';
-        return;
-    	}
-
-    // Assume the points form a closed shape and calculate the volume
-    // Volume of tetrahedron formula: V = (1/6) * | a · (b × c) |
-    // where a, b, c are vectors formed by three non-collinear points.
-
-    const basePoint = markedPoints[0];  // Arbitrarily pick the first point as the base
-
-    for (let i = 1; i < markedPoints.length - 2; i++) {
-        const v1 = new THREE.Vector3().subVectors(markedPoints[i], basePoint);
-        const v2 = new THREE.Vector3().subVectors(markedPoints[i + 1], basePoint);
-        const v3 = new THREE.Vector3().subVectors(markedPoints[i + 2], basePoint);
-        
-        // Compute the scalar triple product: a · (b × c)
-        const volumeContribution = v1.dot(v2.cross(v3)) / 6;
-        volume += Math.abs(volumeContribution);
-    	}
-
-    document.getElementById('volume').textContent = `Volume: ${volume.toFixed(2)}`;
-	};
-
-	// Function to add coordinates and update calculations
-	const addCoordinate = (x, y, z) => {
-    	const coordinateDiv = document.createElement('div');
-    	coordinateDiv.textContent = `(${x}, ${y}, ${z})`;
-    	document.getElementById('coordinateList').appendChild(coordinateDiv);
-
-    	const sphereGeometry = new THREE.SphereGeometry(0.1, 16, 16);
-    	const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
-    	const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-    	sphere.position.set(x, y, z);
-    	scene.add(sphere);
-
-    	const newPoint = new THREE.Vector3(x, y, z);
-    	markedPoints.push(newPoint);
-
-    	for (let i = 0; i < markedPoints.length - 1; i++) {
-        	createLine(markedPoints[i], newPoint);
-    	}
-
-    	checkForRightAngles();
-    	calculatePerimeter();  // Calculate perimeter
-    	calculateCentroid();   // Calculate centroid
-    	calculateVolume();     // Calculate volume
-	};
         // Create a scene and camera
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x000000);
