@@ -1,3 +1,76 @@
+/*HTML 結構
+
+標頭部分 (<head>)
+	•	<meta charset="UTF-8">：設置文件的字符編碼為 UTF-8。
+	•	<title>：頁面的標題設定為 “FPS Performance Evaluation”。
+	•	<style>：定義了頁面的 CSS 樣式，包括頁面背景、控件樣式、字體樣式等。
+    
+主體部分 (<body>)
+	•	#fps-counter：用來顯示FPS數據，包含黑色字體和白色半透明背景，使數字在畫面上清晰顯示。
+	•	#controls-left：控制面板，位於畫面左上方。內含4個滑桿（<input type="range">），用於調整 3D 場景參數。
+	•	#cube-count-slider：調整立方體的數量，範圍從 1 到 1000。
+	•	#rotation-speed-slider：調整立方體的旋轉速度，範圍從 0.01 到 0.1。
+	•	#resolution-slider：調整渲染解析度，範圍從 100 到 16000（表示模擬的畫面高度，以像素為單位）。
+	•	#fov-slider：調整相機的視角（Field of View），範圍從 30 到 179 度。
+	•	每個滑桿下面都顯示當前的數值，用於即時展示滑桿的當前設定。
+
+CSS 樣式
+
+	•	body { margin: 0; overflow: hidden; }：取消頁面的預設邊距和滾動條，讓 3D 畫布覆蓋整個頁面。
+	•	canvas { display: block; }：將畫布設置為區塊顯示，以填滿頁面。
+	•	**#fps-counter**和 #controls-left：設置為絕對定位，讓它們不會隨畫布內容移動，並固定於頁面左上方。
+
+JavaScript 部分
+
+JavaScript 的程式碼中使用了 Three.js 來生成 3D 場景，並允許用戶調整場景中的一些參數來測試 FPS 表現。
+核心變數定義
+	•	定義了 scene、camera、renderer 來構建 Three.js 的場景、相機和渲染器。
+	•	cubes：存儲所有生成的立方體，以便在 animate 函數中調整每個立方體的旋轉。
+	•	FPS 計算：frameCount 和 lastTime 變數用於計算每秒幀數。
+
+初始化函數 init()
+	•	場景：scene 用來管理所有 3D 對象。
+	•	相機：使用 THREE.PerspectiveCamera 創建了一個透視相機，初始 FOV 設為 75 度，設置了近平面為 0.1 和遠平面為 50000。
+	•	相機位置：camera.position.z = 5 將相機向後移，方便觀看立方體。
+	•	渲染器：renderer 使用 WebGL 來繪製 3D 場景，且啟用了抗鋸齒 (antialias: true)。
+	•	將渲染器的背景顏色設置為黑色（0x000000）。
+	•	renderer.setSize(window.innerWidth, window.innerHeight); 設置渲染尺寸與瀏覽器視窗大小相同。
+	•	雙擊事件：用於進入/退出全屏模式。
+
+立方體創建函數 createCubes(count)
+	•	刪除現有立方體：每次更新立方體數量時，先刪除場景中的所有立方體。
+	•	生成新立方體：
+	•	大小：立方體大小根據其索引動態調整，並非所有立方體大小都相同。
+	•	顏色：每個立方體的顏色由 HSL 定義，色調根據立方體的索引平分 360 度。
+	•	位置：所有立方體都放置在 (0, 0, 0) 位置。
+	•	旋轉方向：每個立方體根據索引的奇偶性設定不同的旋轉方向（正向或反向旋轉）。
+	•	更新顯示：更新 #cube-count-display，顯示當前的立方體數量。
+
+動畫函數 animate()
+	•	旋轉效果：使用滑桿控制立方體的旋轉速度，每個立方體的 x、y、z 軸根據滑桿設置的速度進行旋轉。
+	•	顏色變化：每個立方體的顏色隨著時間（performance.now()）週期性變換色調，以達到顏色循環效果。
+	•	FPS 計算：
+	•	每秒計算一次 FPS，並更新 fps-counter 顯示。
+	•	frameCount 計數幀數，並根據與 lastTime 的差值（delta）計算 FPS。
+	•	渲染：使用 renderer.render(scene, camera); 進行渲染更新畫面。
+
+事件監聽器
+	•	視窗大小變更：當視窗大小改變時，更新相機的長寬比並重新設定渲染器的大小。
+	•	滑桿輸入：為每個滑桿設置事件監聽，讓用戶在滑動時可以動態更改 3D 場景參數。
+	•	cubeCountSlider：改變立方體數量，並重新調用 createCubes 函數。
+	•	rotationSpeedSlider：即時更新旋轉速度顯示。
+	•	resolutionSlider：根據滑桿值，調用 updateResolution 函數更新解析度。
+	•	fovSlider：根據滑桿值，調用 updateFOV 函數更新相機的 FOV。
+
+自定義函數 updateResolution 和 updateFOV
+	•	updateResolution(resolution)：用來調整渲染器的解析度。
+	•	根據滑桿的解析度值計算高度，並設置相機的長寬比。
+	•	renderer.setPixelRatio：設置像素比率（適應螢幕設備的DPI），並用 renderer.setSize 更新渲染器的尺寸。
+	•	updateFOV(fov)：更新相機的視角（FOV），並立即更新 camera.updateProjectionMatrix 確保變更生效。
+
+總結
+這個頁面提供了一個即時調整 3D 場景參數的介面，用來分析立方體數量、旋轉速度、解析度和視角對 FPS 的影響。*/
+===========================================================================================================《程式嗎在以下》
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
